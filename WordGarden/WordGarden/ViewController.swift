@@ -138,16 +138,6 @@ class ViewController: UIViewController {
         titleLabel.font = UIFont(name: "Copperplate", size: 24.0)
         view.addSubview(titleLabel)
         
-//        NSLayoutConstraint.activate([
-//            
-//            titleLabel.topAnchor.constraint(equalTo: verticalStackContainer.bottomAnchor, constant: 30),
-//            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-//            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-//            titleLabel.heightAnchor.constraint(equalToConstant: 80.0),
-//            
-//        ])
-        
-        
     }
     
     
@@ -163,12 +153,6 @@ class ViewController: UIViewController {
         
         view.addSubview(underscoreLabel)
         
-//        NSLayoutConstraint.activate([
-//            underscoreLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -220),
-//            underscoreLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-//            underscoreLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-//            underscoreLabel.heightAnchor.constraint(equalToConstant: 21.0),
-//        ])
     }
     
     
@@ -179,12 +163,16 @@ class ViewController: UIViewController {
         guessTextInput = UITextField(frame: CGRect(x: 0, y: 0, width: 30, height: 34))
         guessTextInput.textAlignment = .center
         guessTextInput.borderStyle = .roundedRect
-        guessTextInput.spellCheckingType = .no
-        guessTextInput.autocorrectionType = .no
+        guessTextInput.addTarget(self, action: #selector(doneKeyPressed), for: .primaryActionTriggered)
+        guessTextInput.addTarget(self, action: #selector(guessedLetterFieldChanged), for: .editingChanged)
         
-        guessSubmitted = UIButton(frame: CGRect(x: 0, y: 0, width: 150, height: 30))
+        // Run keyboard configuration
+        
+        configureKeyboard()
+        
+        guessSubmitted = UIButton(type: .system)
         guessSubmitted.setTitle("Guess a Letter", for: .normal)
-        guessSubmitted.setTitleColor(.white, for: .normal)
+        guessSubmitted.isEnabled = false
         guessSubmitted.addTarget(self, action: #selector(guessLetterButtonPressed), for: .touchUpInside)
         
         guessLetterContainer = UIStackView(arrangedSubviews: [guessTextInput, guessSubmitted])
@@ -196,12 +184,19 @@ class ViewController: UIViewController {
         
         view.addSubview(guessLetterContainer)
         
-//        NSLayoutConstraint.activate([
-//
-//            guessLetterContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -175),
-//            guessLetterContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-//
-//        ])
+    }
+    
+    
+    func configureKeyboard() {
+        
+        // Configure the properties of the keyboard
+        
+        guessTextInput.spellCheckingType = .no
+        guessTextInput.autocorrectionType = .no
+        guessTextInput.autocapitalizationType = .allCharacters
+        guessTextInput.returnKeyType = .done
+        guessTextInput.enablesReturnKeyAutomatically = true
+
     }
     
     func restartGame() {
@@ -308,11 +303,32 @@ class ViewController: UIViewController {
 extension ViewController {
     
     
+    private func updateUIAfterGuess() {
+    
+        let guess = guessTextInput.text!
+        print("Guess: ", guess)
+        
+        guessTextInput.text = ""
+        guessSubmitted.isEnabled = !(guessTextInput.text!.isEmpty)
+        guessTextInput.resignFirstResponder()
+        
+    }
+    
+    
+    // TODO: - Setup logic for handling keyboard events when inside textfield
+    
+    @objc private func doneKeyPressed(_ sender: Any) {
+        
+        updateUIAfterGuess()
+        
+    }
+    
     // TODO: - Setup logic when a user types a letter and submits the guess
     
     @objc private func guessLetterButtonPressed(_ sender: UIButton) {
         
-        print("Guesse letter pressed")
+        updateUIAfterGuess()
+        
     }
     
     
@@ -323,5 +339,13 @@ extension ViewController {
         print("Restart Game")
     }
     
+    
+    @objc private func guessedLetterFieldChanged(_ sender: UITextField) {
+        
+        let text = guessTextInput.text!
+        guessSubmitted.isEnabled = !(text.isEmpty)
+        print(text)
+        
+    }
 
 }
