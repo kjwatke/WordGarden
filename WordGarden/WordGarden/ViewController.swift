@@ -9,6 +9,8 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    // MARK: - Properties
+    
     var wordsGuessedLabel: UILabel!
     var wordsMissedLabel: UILabel!
     var wordsRemainingLabel: UILabel!
@@ -26,6 +28,15 @@ class ViewController: UIViewController {
     var guessLetterContainer: UIStackView!
     var labelsContainer: UIStackView!
     
+    var wordsToGuess = ["SWIFT", "DOG", "CAT"]
+    var currentWordIndex = 0
+    var wordToGuess = ""
+    var lettersGuessed = ""
+    var maxNumberOfWrongGuesses = 8
+    var wrongGuessesRemaining = 8
+    
+    // MARK: - Lifecycle Methods
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -41,7 +52,11 @@ class ViewController: UIViewController {
         configureFlowerImageView()
         configureLabelsContainer()
         
+        setupGame()
+        
+        
     }
+    
     
     // Configure attributes for the labels
     
@@ -84,6 +99,7 @@ class ViewController: UIViewController {
         wordsInGameLabel.font = UIFont.systemFont(ofSize: 12.0)
         
     }
+    
     
     // Configure container views for labels
     
@@ -148,7 +164,7 @@ class ViewController: UIViewController {
         underscoreLabel = UILabel(frame: .zero)
         underscoreLabel.translatesAutoresizingMaskIntoConstraints = false
         underscoreLabel.textColor = .white
-        underscoreLabel.text = "_ _ _ _ _"
+        underscoreLabel.text = "_"
         underscoreLabel.textAlignment = .center
         
         view.addSubview(underscoreLabel)
@@ -198,6 +214,7 @@ class ViewController: UIViewController {
         guessTextInput.enablesReturnKeyAutomatically = true
 
     }
+    
     
     func restartGame() {
         
@@ -298,6 +315,72 @@ class ViewController: UIViewController {
 
 }
 
+
+// MARK: - Game Logic
+
+extension ViewController {
+    
+    
+    func setupGame () {
+        
+        wordToGuess = wordsToGuess[currentWordIndex]
+        underscoreLabel.text = "_" + String(repeating: " _", count: wordToGuess.count - 1)
+    }
+    
+    
+    func formatRevealedWord() {
+        
+        // Format and show revealedWord in wordBeingRevealed to include new guess
+        
+        var revealedWord = ""
+        
+        // Loop through all letters in wordToGuess
+        
+        for letter in wordToGuess {
+            
+            // Check if letter in wordToGuess is in lettersGuessed
+            
+            if lettersGuessed.contains(letter) {
+                
+                // Add this letter + a blank space to revealedWord
+                
+                revealedWord += String(letter) + " "
+            }
+            else {
+                revealedWord += "_ "
+            }
+        }
+        
+        // Remove extra last space at the end of revealedWord
+        
+        revealedWord.removeLast()
+        
+        underscoreLabel.text = revealedWord
+        
+    }
+    
+    
+    func guessALetter() {
+        
+        // Get current letter guessed and add it to lettersGuessed
+        
+        let currentLetterGuessed = guessTextInput.text!
+        lettersGuessed += currentLetterGuessed
+        
+        formatRevealedWord()
+        
+        // update image, if needed, and keep track of wrong guesses
+        
+        if !wordToGuess.contains(currentLetterGuessed) {
+            
+            wrongGuessesRemaining -= 1
+            flowerImageView.image = UIImage(named: "flower\(wrongGuessesRemaining)")
+        }
+        
+    }
+}
+
+
 // MARK: - Selector methods
 
 extension ViewController {
@@ -316,14 +399,14 @@ extension ViewController {
     
     
     @objc private func doneKeyPressed(_ sender: Any) {
-        
+        guessALetter()
         updateUIAfterGuess()
         
     }
     
     
     @objc private func guessLetterButtonPressed(_ sender: UIButton) {
-        
+        guessALetter()
         updateUIAfterGuess()
         
     }
