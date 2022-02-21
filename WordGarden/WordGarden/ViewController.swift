@@ -315,15 +315,12 @@ extension ViewController {
     }
     
     
-    // TODO: - Setup logic for handling keyboard events when inside textfield
-    
     @objc private func doneKeyPressed(_ sender: Any) {
         
         updateUIAfterGuess()
         
     }
     
-    // TODO: - Setup logic when a user types a letter and submits the guess
     
     @objc private func guessLetterButtonPressed(_ sender: UIButton) {
         
@@ -331,8 +328,6 @@ extension ViewController {
         
     }
     
-    
-    // TODO: - Setup logic to restart game
     
     @objc private func restartGamePressed(_ sender: UIButton) {
         
@@ -344,8 +339,17 @@ extension ViewController {
         
         let text = guessTextInput.text!
         guessSubmitted.isEnabled = !(text.isEmpty)
-        print(text)
+
+        
+        guard let char = text.last else {
+            
+            guessTextInput.text = ""
+            return
+            
+        }
+        
+        guessTextInput.text = String(char)
+        
         
     }
-
 }
