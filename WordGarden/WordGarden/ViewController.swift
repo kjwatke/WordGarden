@@ -8,7 +8,7 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     // MARK: - Properties
     
     var wordsGuessedLabel: UILabel!
@@ -34,6 +34,9 @@ class ViewController: UIViewController {
     var lettersGuessed = ""
     var maxNumberOfWrongGuesses = 8
     var wrongGuessesRemaining = 8
+    var wordsGuessedCount = 0
+    var wordsMissedCount = 0
+    var guessCount = 0
     
     // MARK: - Lifecycle Methods
     
@@ -53,7 +56,7 @@ class ViewController: UIViewController {
         configureLabelsContainer()
         
         setupGame()
-        
+        updateGameStatusLabels()
         
     }
     
@@ -79,7 +82,7 @@ class ViewController: UIViewController {
         wordsMissedLabel.textColor = .white
         wordsMissedLabel.textAlignment = .left
         wordsMissedLabel.font = UIFont.systemFont(ofSize: 12.0)
-
+        
         // Configure wordsRemainingLabel
         
         wordsRemainingLabel = UILabel(frame: .zero)
@@ -137,7 +140,7 @@ class ViewController: UIViewController {
             wordsInGameLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.48),
             
         ])
-
+        
     }
     
     
@@ -212,7 +215,7 @@ class ViewController: UIViewController {
         guessTextInput.autocapitalizationType = .allCharacters
         guessTextInput.returnKeyType = .done
         guessTextInput.enablesReturnKeyAutomatically = true
-
+        
     }
     
     
@@ -227,6 +230,7 @@ class ViewController: UIViewController {
         restartButton.layer.borderWidth = 1
         restartButton.layer.borderColor = UIColor.black.cgColor
         restartButton.setTitleColor(.black, for: .normal)
+        restartButton.isHidden = true
         view.addSubview(restartButton)
         restartButton.addTarget(self, action: #selector(restartGamePressed), for: .touchUpInside)
         
@@ -245,7 +249,7 @@ class ViewController: UIViewController {
         
         guessesLabel = UILabel(frame: .zero)
         guessesLabel.translatesAutoresizingMaskIntoConstraints = false
-        guessesLabel.text = "You've Made Zero Guesses"
+        guessesLabel.text = "You've Made 0 Guesses"
         guessesLabel.backgroundColor = .white
         guessesLabel.layer.borderColor = UIColor.black.cgColor
         guessesLabel.layer.borderWidth = 1
@@ -312,7 +316,7 @@ class ViewController: UIViewController {
             labelsContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
         ])
     }
-
+    
 }
 
 
@@ -360,25 +364,99 @@ extension ViewController {
     }
     
     
+    func updateAfterWinOrLose() {
+        
+        // Handle game over
+        
+        currentWordIndex += 1
+        wordsMissedCount += 1
+        guessTextInput.isEnabled = false
+        guessSubmitted.isEnabled = false
+        restartButton.isHidden = false
+        
+        // Update the four labels
+        
+        updateGameStatusLabels()
+        
+    }
+    
+    
+    func updateGameStatusLabels() {
+        
+        wordsGuessedLabel.text = "Words Guessed: \(wordsGuessedCount)"
+        wordsMissedLabel.text = "Words Missed: \(wordsMissedCount)"
+        wordsRemainingLabel.text = "Words to Guess: \(wordsToGuess.count - (wordsGuessedCount + wordsMissedCount) )"
+        wordsInGameLabel.text = "Words in Game: \(wordsToGuess.count)"
+        
+    }
+    
+    
     func guessALetter() {
         
         // Get current letter guessed and add it to lettersGuessed
         
         let currentLetterGuessed = guessTextInput.text!
-        lettersGuessed += currentLetterGuessed
+        
+        guard !lettersGuessed.contains(currentLetterGuessed) else {
+            
+            let alertVC = UIAlertController(
+                title: "Error, Duplicate Guess",
+                message: "You've already made that guess, try a different letter",
+                preferredStyle: .alert
+            )
+            
+            let action = UIAlertAction(title: "Dismiss", style: .cancel, handler: nil)
+            alertVC.addAction(action)
+            present(alertVC, animated: false, completion: nil)
+
+            return
+            
+        }
+        
+        handleValidatedGuess()
+        
+    }
+    
+    
+    func handleValidatedGuess() {
+        
+        lettersGuessed += guessTextInput.text!
         
         formatRevealedWord()
         
         // update image, if needed, and keep track of wrong guesses
         
-        if !wordToGuess.contains(currentLetterGuessed) {
+        if !wordToGuess.contains(guessTextInput.text!) {
             
             wrongGuessesRemaining -= 1
             flowerImageView.image = UIImage(named: "flower\(wrongGuessesRemaining)")
         }
         
+        // Keep track of the guesses and change guess to plural when guesscount is anything other than 1
+        
+        guessCount += 1
+        let guesses = guessCount == 1 ? "Guess" : "Guesses"
+        guessesLabel.text = "You've made \(guessCount) \(guesses)"
+        
+        // Check for win or lose
+        
+        if let userAnswer = underscoreLabel.text {
+            if !userAnswer.contains("_") {
+                guessesLabel.text = "You've guessed it! It took you \(guessCount) guesses to guess the word"
+                wordsGuessedCount += 1
+                updateAfterWinOrLose()
+            }
+            else if wrongGuessesRemaining == 0 {
+                guessesLabel.text = "So sorry. You're all out of guesses."
+                updateAfterWinOrLose()
+            }
+        }
+        
     }
 }
+
+
+
 
 
 // MARK: - Selector methods
@@ -387,7 +465,7 @@ extension ViewController {
     
     
     private func updateUIAfterGuess() {
-    
+        
         let guess = guessTextInput.text!
         print("Guess: ", guess)
         
@@ -414,7 +492,26 @@ extension ViewController {
     
     @objc private func restartGamePressed(_ sender: UIButton) {
         
-        print("Restart Game")
+        if currentWordIndex == wordToGuess.count {
+            
+            currentWordIndex = 0
+            wordsGuessedCount = 0
+            wordsMissedCount = 0
+            
+        }
+        
+        restartButton.isHidden = true
+        guessTextInput.isEnabled = true
+        guessSubmitted.isEnabled = false
+        wordToGuess = wordsToGuess[currentWordIndex]
+        wrongGuessesRemaining = maxNumberOfWrongGuesses
+        underscoreLabel.text = "_" + String(repeating: " _", count: wordToGuess.count - 1)
+        guessCount = 0
+        flowerImageView.image = UIImage(named: "flower\(maxNumberOfWrongGuesses)")
+        lettersGuessed = ""
+        guessesLabel.text = "You've Made 0 Guesses"
+        updateGameStatusLabels()
+        
     }
     
     
@@ -422,7 +519,7 @@ extension ViewController {
         
         let text = guessTextInput.text!
         guessSubmitted.isEnabled = !(text.isEmpty)
-
+        
         
         guard let char = text.last else {
             
