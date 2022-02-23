@@ -430,6 +430,10 @@ extension ViewController {
             
             wrongGuessesRemaining -= 1
             flowerImageView.image = UIImage(named: "flower\(wrongGuessesRemaining)")
+            SoundManager.playSound(name: "incorrect")
+        }
+        else {
+            SoundManager.playSound(name: "correct")
         }
         
         // Keep track of the guesses and change guess to plural when guesscount is anything other than 1
@@ -444,10 +448,12 @@ extension ViewController {
             if !userAnswer.contains("_") {
                 guessesLabel.text = "You've guessed it! It took you \(guessCount) guesses to guess the word"
                 wordsGuessedCount += 1
+                SoundManager.playSound(name: "word-guessed")
                 updateAfterWinOrLose()
             }
             else if wrongGuessesRemaining == 0 {
                 guessesLabel.text = "So sorry. You're all out of guesses."
+                SoundManager.playSound(name: "word-not-guessed")
                 updateAfterWinOrLose()
             }
         }
@@ -515,6 +521,14 @@ extension ViewController {
     }
     
     
+    @objc private func convertInputToUppercased(_ sender: UITextField) {
+        
+        let input = sender.text!
+        sender.text = input.uppercased()
+        
+    }
+    
+    
     @objc private func guessedLetterFieldChanged(_ sender: UITextField) {
         
         let text = guessTextInput.text!
@@ -528,7 +542,7 @@ extension ViewController {
             
         }
         
-        guessTextInput.text = String(char)
+        guessTextInput.text = String(char).uppercased()
         
         
     }
