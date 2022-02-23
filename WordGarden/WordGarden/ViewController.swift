@@ -390,6 +390,46 @@ extension ViewController {
         
     }
     
+    func drawFlowerAndPlaySound() {
+        
+        if !wordToGuess.contains(guessTextInput.text!) {
+            
+            wrongGuessesRemaining -= 1
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                UIView.transition(
+                    with: self.flowerImageView,
+                    duration: 0.5,
+                    options: .transitionCrossDissolve,
+                    animations: {self.flowerImageView.image = UIImage(named: "wilt\(self.wrongGuessesRemaining)")}) { _ in
+                        
+                        if self.wrongGuessesRemaining != 0 {
+                            self.flowerImageView.image = UIImage(named: "flower\(self.wrongGuessesRemaining)")
+                        }
+                        else {
+                            
+                            SoundManager.playSound(name: "word-not-guessed")
+                            
+                            UIView.transition(
+                                with: self.flowerImageView,
+                                duration: 0.5,
+                                options: .transitionCrossDissolve,
+                                animations: {self.flowerImageView.image = UIImage(named: "flower\(self.wrongGuessesRemaining)")},
+                                completion: nil
+                            )
+                            
+                        }
+                        
+                    }
+                SoundManager.playSound(name: "incorrect")
+            }
+        }
+        else {
+            SoundManager.playSound(name: "correct")
+        }
+        
+    }
+    
     
     func guessALetter() {
         
@@ -408,7 +448,7 @@ extension ViewController {
             let action = UIAlertAction(title: "Dismiss", style: .cancel, handler: nil)
             alertVC.addAction(action)
             present(alertVC, animated: false, completion: nil)
-
+            
             return
             
         }
@@ -426,15 +466,7 @@ extension ViewController {
         
         // update image, if needed, and keep track of wrong guesses
         
-        if !wordToGuess.contains(guessTextInput.text!) {
-            
-            wrongGuessesRemaining -= 1
-            flowerImageView.image = UIImage(named: "flower\(wrongGuessesRemaining)")
-            SoundManager.playSound(name: "incorrect")
-        }
-        else {
-            SoundManager.playSound(name: "correct")
-        }
+        drawFlowerAndPlaySound()
         
         // Keep track of the guesses and change guess to plural when guesscount is anything other than 1
         
