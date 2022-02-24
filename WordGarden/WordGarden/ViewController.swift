@@ -60,6 +60,7 @@ class ViewController: UIViewController {
         
     }
     
+    // MARK: - UI creation
     
     // Configure attributes for the labels
     
